@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+
+<launch>
+  <!-- uris of the crazyflies
+  cf0: "radio://0/80/1M/E7E7E7E700"
+  cf1:
+  cf2: "radio://0/84/1M/E7E7E7E702"
+  cf3: "radio://0/84/1M/E7E7E7E703"
+  cf4: "radio://0/88/1M/E7E7E7E704"
+  cf5: "radio://0/88/1M/E7E7E7E705"
+  -->
+  <!-- arguments -->
+  <arg name="server" default="192.168.2.230" />
+  <arg name="port" default="3883" />
+  <arg name="res_file" default="cf0_yaw2" />
+  <arg name="uri" default="radio://0/80/1M/E7E7E7E700" />
+  <arg name="cf_frame" default="cf0" />
+
+
+  <!-- start crazyflie_client -->
+  <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
+  </include>
+  <!-- run vrpn client -->
+  <include file="$(find optitrack_broadcast)/launch/optitrack_broadcast_p300.launch">
+      <arg name="server" value="$(arg server)" />
+      <arg name="frames" value="$(arg cf_frame)" />
+  </include>
+
+
+  <!-- add the intruder -->
+  <group ns='$(arg cf_frame)'>
+
+      <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
+          <arg name="uri" value="$(arg uri)" />
+          <arg name="tf_prefix" value="$(arg cf_frame)" />
+          <arg name="enable_logging" value="True" />
+      </include>
+
+      <include file="$(find crazyflie_controller)/launch/crazyflie2.launch">
+          <arg name="frame" value="$(arg cf_frame)" />
+      </include>
+
+      <node name="recorder" pkg="crazyflie_model" type="recorder.py" output="screen">
+          <param name="cf_frame" value="$(arg cf_frame)"/>
+          <param name="logger_dir" value="$(arg res_file)"/>
+      </node>
+
+  </group>
+
+
+  <node name="CFmodel" pkg="crazyflie_model" type="CFmodel.py" output="screen">
+      <param name="cf_frame" value="$(arg cf_frame)"/>
+  </node>
+
+</launch>
